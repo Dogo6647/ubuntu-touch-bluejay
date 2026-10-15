@@ -8,6 +8,21 @@ mknod -m 600 "${LXC_ROOTFS_MOUNT}/dev/kmsg" c 1 11
 mknod -m 666 "${LXC_ROOTFS_MOUNT}/dev/random" c 1 8
 mknod -m 666 "${LXC_ROOTFS_MOUNT}/dev/urandom" c 1 9
 
+# bluejay: Trusty, the TEE behind KeyMint, Gatekeeper and metricsd, is reached
+# through /dev/trusty-ipc-dev0, but the container's ueventd never creates it
+# ("tipc_connect: cannot open tipc device /dev/trusty-ipc-dev0"). Create it,
+# and the Trusty log, with the owners and modes of the stock ueventd.rc
+# (system=1000, drmrpc=1026). trusty-ipc-dev0 has a dynamic major, so read the
+# numbers from sysfs; skip a node the kernel doesn't have.
+trusty_node() {
+    [ -r "/sys/class/$1/$2/dev" ] || return 0
+    devnum=$(cat "/sys/class/$1/$2/dev")
+    mknod -m 660 "${LXC_ROOTFS_MOUNT}/dev/$2" c "${devnum%%:*}" "${devnum#*:}" &&
+        chown "$3" "${LXC_ROOTFS_MOUNT}/dev/$2"
+}
+trusty_node trusty_ipc trusty-ipc-dev0 1000:1026
+trusty_node misc trusty-log0 1000:1000
+
 # Don't expose the raw commandline to unprivileged processes.
 chmod 440 "${LXC_ROOTFS_MOUNT}/proc/cmdline"
 
