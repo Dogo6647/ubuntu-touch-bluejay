@@ -3,9 +3,25 @@ name: build
 on:
   push:
     branches: [main]
-    paths-ignore: ['README.md']
+    paths-ignore: ['README.md', 'CHANGELOG.md', 'docs/**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      variant:
+        description: Image variant (see make-flashable.sh)
+        type: choice
+        options: [devel, release]
+        default: devel
+  # release.yml builds the release variant through this workflow
+  workflow_call:
+    inputs:
+      variant:
+        description: Image variant, devel or release (see make-flashable.sh)
+        type: string
+        default: devel
+
+permissions:
+  contents: read
 
 jobs:
   # Ubuntu Touch packages rebuilt with fixes for this port. Native arm64, built
@@ -34,6 +50,7 @@ jobs:
         with:
           name: extra-debs
           path: out/extra-debs/*.deb
+          if-no-files-found: error
 
   build:
     needs: packages
@@ -69,10 +86,14 @@ jobs:
             out/device_bluejay.tar.xz
             out/device_bluejay.tar.build
             out/Module.symvers
+          if-no-files-found: error
 
   flashable:
     needs: build
     runs-on: ubuntu-24.04
+    env:
+      # inputs is empty on push and pull_request
+      VARIANT: ${{ inputs.variant || 'devel' }}
     steps:
       - name: Free disk space
         run: |
@@ -90,19 +111,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            android-sdk-libsparse-utils e2fsprogs fakeroot git jq wget xz-utils zstd
+            android-sdk-libsparse-utils e2fsprogs fakeroot git jq python3 wget xz-utils zstd
 
       - name: Fetch build tools and stage the port
         run: ./build.sh -s
 
-      - name: Make flashable images
+      - name: Make flashable images (${{ env.VARIANT }})
         run: |
-          ./make-flashable.sh
+          ./make-flashable.sh --variant "$VARIANT"
           zstd -T0 -12 --rm out/system.img
+          cd out
+          sha256sum boot.img boot-installer.img system.img.zst build-info.txt > SHA256SUMS
+          cat SHA256SUMS
 
       - uses: actions/upload-artifact@v7
         with:
           name: flashable-bluejay
           path: |
             out/boot.img
+            out/boot-installer.img
             out/system.img.zst
+            out/build-info.txt
+            out/SHA256SUMS
+          if-no-files-found: error

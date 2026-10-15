@@ -1,0 +1,75 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # release.yml lints the tagged commit through this workflow
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  SHELLCHECK_VERSION: 0.11.0
+  SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+  ACTIONLINT_VERSION: 1.7.12
+  ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+  # tools/install.py supports Python 3.8 and later
+  PYTHON_OLDEST_IMAGE: python:3.8-slim@sha256:1d52838af602b4b5a831beb13a0e4d073280665ea7be7f69ce2382f29c5a613f
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install shellcheck and actionlint
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o shellcheck.tar.xz \
+            "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK_VERSION/shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+          echo "$SHELLCHECK_SHA256  shellcheck.tar.xz" | sha256sum -c
+          tar -xJf shellcheck.tar.xz -C bin --strip-components=1 "shellcheck-v$SHELLCHECK_VERSION/shellcheck"
+          curl -fsSL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v$ACTIONLINT_VERSION/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "$ACTIONLINT_SHA256  actionlint.tar.gz" | sha256sum -c
+          tar -xzf actionlint.tar.gz -C bin actionlint
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: shellcheck
+        run: |
+          # Every tracked shell script: *.sh, and the files with a sh or bash
+          # shebang (overlay scripts such as device-hacks and audio-policy)
+          shebang='^#!.*[/ ](ba|da)?sh( |$)'
+          git ls-files -z | while IFS= read -r -d '' f; do
+            first=
+            IFS= read -r first < "$f" || true
+            if [[ $f == *.sh || $first =~ $shebang ]]; then
+              printf '%s\0' "$f"
+            fi
+          done | xargs -0 -r shellcheck -x -P SCRIPTDIR
+
+      - name: actionlint
+        # Also runs shellcheck on the workflows' run: scripts
+        run: actionlint -color
+
+      - name: Python
+        run: |
+          git ls-files -z '*.py' | xargs -0 -r python3 -m py_compile
+          if [ -d tests ]; then
+            python3 -m unittest discover -s tests -v
+          fi
+
+      - name: Python 3.8, the oldest install.py supports
+        run: |
+          # Works on a copy, so nothing root-owned lands in the checkout
+          docker run --rm -v "$PWD:/src:ro" "$PYTHON_OLDEST_IMAGE" sh -ec '
+            cp -a /src /tmp/src
+            cd /tmp/src
+            python3 -m compileall -q -x "/\.git/" .
+            if [ -d tests ]; then
+              python3 -m unittest discover -s tests -v
+            fi
+          '

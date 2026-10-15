@@ -1,0 +1,74 @@
+name: release
+
+# Pushing a v* tag (v0.1.0) lints and builds the release variant and creates a
+# draft GitHub release with the images, install.py and SHA256SUMS. Review the
+# draft and publish it by hand.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      variant: release
+
+  draft:
+    needs: [lint, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: flashable-bluejay
+          path: dist
+
+      - name: Collect the assets
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS
+          cp ../tools/install.py .
+          sha256sum boot.img boot-installer.img system.img.zst install.py build-info.txt > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Write the release notes
+        run: |
+          # This version's section of CHANGELOG.md ("## [0.1.0] - 2026-10-20"),
+          # without the link definitions at the end of the file
+          awk -v ver="${TAG#v}" '
+            /^## \[/ { if (found) exit; found = index($0, "## [" ver "]") == 1; next }
+            found && !/^\[[^]]*\]: / && (NF || started) { started = 1; print }
+          ' CHANGELOG.md > notes.md || true
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "Ubuntu Touch for the Google Pixel 6a (bluejay), $TAG." > notes.md
+          fi
+          {
+            echo
+            echo "To install, put all the files of this release in one folder and run" \
+              "\`python3 install.py\` there. See the [install guide]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG/docs/install.md)."
+          } >> notes.md
+          cat notes.md
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # A tag with a suffix (v0.2.0-rc1) is a pre-release
+          prerelease=()
+          case "$TAG" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$TAG" --draft --verify-tag --title "$TAG" \
+            --notes-file notes.md "${prerelease[@]}" \
+            dist/boot.img dist/boot-installer.img dist/system.img.zst \
+            dist/install.py dist/build-info.txt dist/SHA256SUMS
