@@ -3,9 +3,9 @@
 An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 
 > **Status: early bring-up.** Ubuntu Touch runs: display, touch, Wi-Fi,
-> sound, cameras, GPS, sensors, vibration, battery and adb work. Don't install this on a
-> phone you depend on: installing it wipes the phone, and calls, camera and
-> other hardware may never work.
+> sound, cameras, GPS, sensors, vibration, battery and adb work. Calls and
+> mobile data haven't been tested yet. Don't install this on a phone you
+> depend on: installing it wipes the phone.
 
 ## Progress
 
