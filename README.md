@@ -2,14 +2,14 @@
 
 An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 
-> **Status: early bring-up.** Ubuntu Touch boots to its welcome wizard, and
-> touch, Wi-Fi scanning, rotation and vibration work. Don't install this on a
+> **Status: early bring-up.** Ubuntu Touch runs: display, touch, Wi-Fi,
+> sound output, sensors, vibration, battery and adb work. Don't install this on a
 > phone you depend on: installing it wipes the phone, and calls, camera and
 > other hardware may never work.
 
 ## Progress
 
-Tested on build 3 (2026-10-15):
+Tested on build 5 (2026-10-15):
 
 | Area | State |
 |---|---|
@@ -23,7 +23,8 @@ Tested on build 3 (2026-10-15):
 | adb over USB | Working |
 | Bluetooth | Controller up; pairing not tested |
 | Modem | Both SIM slots come up in oFono; calls and data not tested |
-| Sound | Not yet: PulseAudio's droid module rejects the float outputs and then crashes (fixes in progress) |
+| Sound output (speaker) | Working: 16-bit audio policy and a rebuilt PulseAudio droid module (`packages/`) |
+| Microphone | Not yet: the input stream opens but delivers no data |
 | Camera, fingerprint, GPS | Not tested |
 
 ## How it works
