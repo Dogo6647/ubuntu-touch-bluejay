@@ -1,0 +1,22 @@
+#!/bin/sh
+# device-hacks for the Pixel 6a (bluejay, gs101) - Halium 16 / Android 16 vendor.
+
+# Android 16 libcutils opens /dev/ashmem<boot_id>; the container's ueventd only creates
+# it inside the container. The GSI libcutils falls back (hybris-patches system/core/0025)
+# but vendor copies of libcutils loaded into host processes (e.g. the audio HAL inside
+# PulseAudio, HYBRIS_USE_VENDOR_NAMESPACE=1) do not.
+BOOT_ID=$(cat /proc/sys/kernel/random/boot_id)
+if [ -c /dev/ashmem ] && [ ! -e "/dev/ashmem${BOOT_ID}" ]; then
+    ln -sf /dev/ashmem "/dev/ashmem${BOOT_ID}"
+fi
+
+# Codec2/droidmedia clients on the host allocate from DMA-BUF heaps.
+chmod 666 /dev/dma_heap/system /dev/dma_heap/system-uncached 2>/dev/null
+
+# NOTE: unlike the Pixel 9 port, do NOT bind-mount vendor libc++/libdmabufheap over the
+# GSI copies: on BP4A.251205.006 /vendor/lib64/libc++.so and the Halium 16 GSI's
+# /system/lib64/libc++.so are byte-identical (sha1 62a94a8f...).
+
+# If Lomiri edge swipes do not register, try disabling the touch offload path
+# (only if this node exists on the gs101 6.1 kernel):
+# echo 0 > /sys/devices/virtual/goog_touch_interface/gti.0/offload_enabled 2>/dev/null

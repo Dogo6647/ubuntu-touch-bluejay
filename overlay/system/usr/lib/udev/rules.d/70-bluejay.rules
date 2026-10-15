@@ -1,0 +1,92 @@
+# Google Pixel 6a (bluejay, gs101) - host-side udev rules for Ubuntu Touch.
+#
+# Generated with the UBports porting-guide method (ueventd.rc -> awk) from
+#   Halium 16 GSI  /system/etc/ueventd.rc
+#   stock vendor   /vendor/etc/ueventd.rc   (BP4A.251205.006)
+# and then curated by hand, following the pattern of the Pixel 3a port
+# (sargo overlay/system/lib/udev/rules.d/70-android.rules):
+#
+#  * Android names that do not exist in the UT rootfs are mapped to the UT
+#    equivalent with the same numeric AID (graphics 1003 -> android_graphics,
+#    input 1004 -> android_input, media 1013 -> android_media), or dropped.
+#  * ueventd paths in sub-directories (dri/*, dma_heap/*, graphics/*, snd/*,
+#    input/*, bus/usb/*, block/...) never match udev's KERNEL== key, which is
+#    the kernel name without the directory, so they are rewritten with
+#    SUBSYSTEM== matches or dropped.
+#  * Nodes that only Android services inside the LXC container open (camera,
+#    codecs, TPU, NFC, secure element, Titan M, Trusty, modem DM, pixelstats)
+#    are left to the container's own ueventd, which runs on the container's
+#    private /dev and applies the Android AIDs itself. They are listed below,
+#    commented out, so that the file can be diffed against ueventd.rc.
+#  * Rules that would weaken the host (kvm/vhost-vsock 0666, tun/ppp to the
+#    non-existent "vpn" group) are dropped.
+
+# --- GPU (Mali-G78, mali_kbase from vendor_dlkm) ---------------------------
+# Opened in-process by libhybris EGL clients (Lomiri, Qt apps) as phablet.
+ACTION=="add", KERNEL=="mali0", OWNER="system", GROUP="android_graphics", MODE="0666"
+
+# --- DRM / framebuffer (exynos-drm, loaded from vendor_boot) ---------------
+# The composer HAL inside the container uses its own /dev; these only matter
+# for host tools. Mirrors "/dev/dri/* 0666 root graphics" from ueventd.rc.
+ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card[0-9]*|renderD[0-9]*", GROUP="android_graphics", MODE="0666"
+ACTION=="add", SUBSYSTEM=="graphics", KERNEL=="fb[0-9]*", GROUP="android_graphics", MODE="0660"
+
+# --- DMA-BUF heaps (samsung_dma_heap) ---------------------------------------
+# ueventd: /dev/dma_heap/<name> 0444. The udev kernel name is <name>.
+ACTION=="add", SUBSYSTEM=="dma_heap", KERNEL=="system|system-uncached|system-secure", OWNER="system", GROUP="system", MODE="0444"
+ACTION=="add", SUBSYSTEM=="dma_heap", KERNEL=="crypto|crypto-uncached|faceauth_tpu-secure|faimg-secure|famodel-secure|faprev-secure|farawimg-secure|tui-secure|vscaler-secure|sensor_direct_heap", OWNER="system", GROUP="android_graphics", MODE="0444"
+ACTION=="add", SUBSYSTEM=="dma_heap", KERNEL=="vframe-secure|video_system|video_system-uncached|vstream-secure", OWNER="system", MODE="0444"
+ACTION=="add", SUBSYSTEM=="dma_heap", KERNEL=="aaudio_playback_heap|aaudio_capture_heap", OWNER="system", GROUP="audio", MODE="0444"
+
+# --- Audio (AoC char devices, used by audio.platform.aoc.so and
+#     sound_trigger.primary.gs101.so; needed when the audio HAL is loaded
+#     in-process by PulseAudio through libhybris) -----------------------------
+ACTION=="add", KERNEL=="acd-audio_output_tuning|acd-audio_bulk_tx|acd-audio_bulk_rx", OWNER="system", GROUP="audio", MODE="0660"
+ACTION=="add", KERNEL=="acd-audio_input_tuning|acd-audio_input_bulk_tx|acd-audio_input_bulk_rx", OWNER="system", GROUP="audio", MODE="0660"
+ACTION=="add", KERNEL=="acd-sound_trigger|acd-hotword_notification|acd-hotword_pcm|acd-ambient_pcm|acd-model_data|acd-debug", OWNER="system", GROUP="audio", MODE="0660"
+ACTION=="add", KERNEL=="acd-audio_tap*|acd-audio_dcdoff_ref", OWNER="system", GROUP="audio", MODE="0660"
+ACTION=="add", KERNEL=="seiren|amcs", OWNER="system", GROUP="audio", MODE="0660"
+# /dev/snd/* is root:audio 0660 by 50-udev-default.rules already.
+
+# --- AoC control / sensors (USF) -------------------------------------------
+ACTION=="add", KERNEL=="aoc", OWNER="system", GROUP="system", MODE="0660"
+ACTION=="add", KERNEL=="acd-com.google.usf|acd-com.google.usf.non_wake_up", OWNER="system", GROUP="system", MODE="0660"
+
+# --- Modem (cpif / shm_ipc); ofono talks to the RIL over binder, these are
+#     for cbd/rild inside the container and for debugging on the host -------
+ACTION=="add", KERNEL=="umts_boot0", OWNER="radio", GROUP="system", MODE="0660"
+ACTION=="add", KERNEL=="umts_ipc0|umts_ipc1|umts_rfs0|oem_ipc*|dit2", OWNER="radio", GROUP="radio", MODE="0660"
+
+# --- Input --------------------------------------------------------------
+# /dev/input/event* is android_input:0660 via 65-android.rules (phablet is a
+# member). Touch heatmap device used by twoshay:
+ACTION=="add", KERNEL=="v4l-touch*", GROUP="android_input", MODE="0660"
+
+# --- Container-only nodes (left to the container's ueventd) --------------
+# camera (group camera does not exist in UT):
+#ACTION=="add", KERNEL=="video0|video1|video2|video3", OWNER="system", GROUP="camera", MODE="0660"
+#ACTION=="add", KERNEL=="media0|media2|v4l-subdev[0-9]|v4l-subdev1[0-9]", OWNER="system", GROUP="camera", MODE="0660"
+#ACTION=="add", KERNEL=="lwis*", OWNER="system", GROUP="system", MODE="0660"
+# codecs / scalers (users media, mediacodec and groups mediadrm, drmrpc do not exist):
+#ACTION=="add", KERNEL=="video6|video7|video8|video9|video10|video11|bigocean", OWNER="mediacodec", GROUP="mediadrm", MODE="0660"
+#ACTION=="add", KERNEL=="video50|m2m1shot_scaler0", OWNER="mediacodec", GROUP="drmrpc", MODE="0660"
+#ACTION=="add", KERNEL=="video2[3-9]|video30|video31|tsmux|repeater|g2d|exynos-mem|media1|v4l-subdev2[01]|v4l-subdev32", GROUP="graphics", MODE="0660"
+#ACTION=="add", KERNEL=="video12|video55|fimg2d|ion|ump", MODE="0666"
+# TPU, Trusty, Titan M (hsm), NFC, secure element, RPMB, pixelstats, TUI:
+#ACTION=="add", KERNEL=="abrolhos|trusty-log0|sg1|tui-driver|wbrc|HPD", OWNER="system", GROUP="system", MODE="0660"
+#ACTION=="add", KERNEL=="trusty-ipc-dev0", OWNER="system", GROUP="drmrpc", MODE="0660"
+#ACTION=="add", KERNEL=="gsc0", OWNER="hsm", GROUP="hsm", MODE="0660"
+#ACTION=="add", KERNEL=="st21nfc", OWNER="nfc", GROUP="nfc", MODE="0660"
+#ACTION=="add", KERNEL=="st54j_se|st54spi|st33spi", OWNER="secure_element", GROUP="secure_element", MODE="0660"
+#ACTION=="add", KERNEL=="logbuffer_pca9468_tcpm", OWNER="system", GROUP="system", MODE="0600"
+#ACTION=="add", KERNEL=="battery_history", OWNER="system", GROUP="system", MODE="0644"
+# Bluetooth UART (user "bluetooth" does not exist; bluebinder uses the HAL):
+#ACTION=="add", KERNEL=="ttySAC16", OWNER="bluetooth", GROUP="system", MODE="0660"
+# modem DM / USB serial gadget ports:
+#ACTION=="add", KERNEL=="umts_dm0|umts_router|ttyGS[0-2]", OWNER="system", GROUP="system", MODE="0660"
+# Storage paths (/dev/block/by-name/* is an Android-only layout):
+#   frp, mfg_data, modem, modem_a, modem_b
+# Dropped on purpose (would weaken or break the host):
+#   kvm, vhost-vsock 0666; tun/ppp group vpn; hw_random prng_seeder;
+#   uhid/uinput owner uhid (60-lomiri-common.rules handles uinput);
+#   hidraw* system:system (breaks uaccess for HID devices).

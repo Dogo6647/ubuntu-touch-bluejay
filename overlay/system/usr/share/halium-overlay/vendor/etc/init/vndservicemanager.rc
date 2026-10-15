@@ -1,0 +1,17 @@
+# Requires a PATCHED /vendor/bin/vndservicemanager shipped next to this file at
+# overlay/system/usr/share/halium-overlay/vendor/bin/vndservicemanager (built from
+# frameworks/native/cmds/servicemanager with Halium hybris-patches
+# frameworks/native/0005-halium-disable-SELinux-checks-in-ServiceManager.patch, as the
+# Pixel 9 port did in commit 5c5c9ff). The stock BP4A binary still contains the
+# getPidcon()/selinux_status_open() CHECKs and aborts.
+service vndservicemanager /vendor/bin/vndservicemanager /dev/vndbinder
+    class core
+    user system
+    group system readproc
+    file /dev/kmsg w
+    setenv LD_PRELOAD libselinux_stubs.so
+    task_profiles ServiceCapacityLow
+    onrestart class_restart main
+    onrestart class_restart hal
+    onrestart class_restart early_hal
+    shutdown critical

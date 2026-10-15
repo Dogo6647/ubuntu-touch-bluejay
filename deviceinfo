@@ -8,13 +8,15 @@ deviceinfo_arch="aarch64"
 deviceinfo_halium_version="16"
 deviceinfo_ubuntu_touch_release="24.04-2.x"
 
-# Kernel: UBports' generic GKI android14-6.1 kernel with halium.config.
-# The stock kernel is GKI android14-6.1 too (6.1.145-android14-11), and the
-# Halium branch keeps the GKI ABI, so the stock vendor modules in vendor_boot
-# and vendor_dlkm load unchanged.
+# Kernel: UBports' generic GKI android14-6.1 kernel with halium.config, plus
+# kernel/bluejay.config, at the commit pinned in build.sh. The stock kernel is
+# GKI android14-6.1 too (6.1.145-android14-11) and the Halium branch keeps the
+# GKI ABI, so the stock vendor modules in vendor_boot and vendor_dlkm load.
+# bluejay.config keeps Bluetooth and rfkill as modules like the stock kernel:
+# built in, they stop vendor_dlkm's Wi-Fi and Bluetooth modules from loading.
 deviceinfo_kernel_source="https://gitlab.com/ubports/porting/community-ports/android12/generic/kernel-android-common.git"
 deviceinfo_kernel_source_branch="android14-6.1-halium"
-deviceinfo_kernel_defconfig="gki_defconfig halium.config"
+deviceinfo_kernel_defconfig="gki_defconfig halium.config bluejay.config"
 deviceinfo_kernel_cmdline=""
 deviceinfo_kernel_clang_compile="true"
 deviceinfo_kernel_llvm_compile="true"
@@ -37,12 +39,10 @@ deviceinfo_prebuilt_boot_ramdisk_source="https://github.com/halium/initramfs-too
 deviceinfo_ramdisk_compression="lz4"
 deviceinfo_skip_dtbo_partition="true"
 
-# There is no recovery partition: UBports' recovery (with fastbootd) goes into
-# boot.img and starts when the bootloader asks for recovery.
+# No recovery: UBports' unified recovery has no USB or fstab setup for gs101
+# yet, so a recovery boot falls through to the normal Halium boot instead.
 deviceinfo_has_recovery_partition="false"
-deviceinfo_use_unified_recovery="true"
-deviceinfo_prebuilt_recovery_ramdisk_source="https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-16.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
+deviceinfo_use_unified_recovery="false"
 
-# Rootfs goes into the system_a logical partition in super
 deviceinfo_rootfs_image_sector_size="4096"
 deviceinfo_system_partition_size="5120M"

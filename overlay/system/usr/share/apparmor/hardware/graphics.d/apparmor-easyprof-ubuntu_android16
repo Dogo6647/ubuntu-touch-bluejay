@@ -1,0 +1,12 @@
+# Android 16 APEX libraries for Halium 16 (copied from the Pixel 9 port) + DMA-BUF heaps.
+/{,android/}{,system/}apex/com.android.i18n/lib{,64}/**     r,
+/{,android/}{,system/}apex/com.android.i18n/lib{,64}/**.so  m,
+/{,android/}{,system/}apex/com.android.media/lib{,64}/**     r,
+/{,android/}{,system/}apex/com.android.media/lib{,64}/**.so  m,
+/{,android/}{,system/}apex/com.android.media.swcodec/lib{,64}/**     r,
+/{,android/}{,system/}apex/com.android.media.swcodec/lib{,64}/**.so  m,
+/{,android/}{,system/}apex/com.android.vndk.v[0-9][0-9]/lib{,64}/**     r,
+/{,android/}{,system/}apex/com.android.vndk.v[0-9][0-9]/lib{,64}/**.so  m,
+/{,android/}{,system/}apex/com.android.conscrypt/lib{,64}/**     r,
+/{,android/}{,system/}apex/com.android.conscrypt/lib{,64}/**.so  m,
+/dev/dma_heap/* r,

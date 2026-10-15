@@ -1,0 +1,7 @@
+# Intentionally empty on the Pixel 6a (Google Tensor gs101).
+# halium-gki ships 70-qcom-common.rules for all GKI devices; on gs101 its rules
+# only add noise or harm the host (e.g. KERNEL=="tun" GROUP="vpn" MODE="0660",
+# KERNEL=="kvm" OWNER="virtmanager" MODE="0600", video*/media*/v4l-subdev*
+# owned by non-existent camera users). The bluejay overlay is copied after the
+# halium-gki overlay (build.sh), so this file replaces it in the device tarball.
+# gs101 rules live in 70-bluejay.rules.

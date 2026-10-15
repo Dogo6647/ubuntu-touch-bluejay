@@ -1,0 +1,16 @@
+# Halium overlay for /vendor/etc/init/android.hardware.usb.gadget-service.rc
+# (Pixel 6a, BP4A.251205.006)
+#
+# On Ubuntu Touch the USB gadget (/sys/kernel/config/usb_gadget/g1, configs/c.1)
+# is owned by usb-moded on the host. Halium's init does not mount configfs at
+# /config inside the container (hybris-patches system/core 0016), so the Pixel
+# gadget HAL finds no /config/usb_gadget/g1/os_desc/b.1 and aborts at start
+# ("configfs setup not done yet"), which makes init restart it in a loop.
+# Nothing in the container calls setCurrentUsbFunctions anyway (no
+# system_server), so keep the service defined but never start it.
+
+service vendor.usb-gadget-hal /vendor/bin/hw/android.hardware.usb.gadget-service.gs101
+    class hal
+    user system
+    group system shell mtp
+    disabled
