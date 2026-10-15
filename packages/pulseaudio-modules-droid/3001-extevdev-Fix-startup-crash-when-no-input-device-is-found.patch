@@ -1,0 +1,37 @@
+From dfda983d07205a2b6eb1d09c8286aa1bb5d31ad8 Mon Sep 17 00:00:00 2001
+From: azkali <a.ffcc7@gmail.com>
+Date: Fri, 31 Jul 2026 16:38:09 +0700
+Subject: [PATCH] extevdev: Fix startup crash when no input device is found
+
+[extevdev] Fix startup crash when no input device is found.
+
+On devices without a headphone jack input device find_input_device()
+finds nothing, setup() fails and pa_droid_extevdev_new() calls
+pa_droid_extevdev_free() with u->event still NULL. mainloop_io_free()
+asserts on the NULL event and aborts the whole daemon:
+
+E: [pulseaudio] droid-extevdev.c: could not start input device detection.
+E: [pulseaudio] mainloop.c: Assertion 'e' failed at ../src/pulse/mainloop.c:206, function mainloop_io_free(). Aborting.
+
+Only free the io event if it was created.
+---
+ src/droid/droid-extevdev.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/droid/droid-extevdev.c b/src/droid/droid-extevdev.c
+index 9c15327..c310dea 100644
+--- a/src/droid/droid-extevdev.c
++++ b/src/droid/droid-extevdev.c
+@@ -275,7 +275,8 @@ void pa_droid_extevdev_free(pa_droid_extevdev *u) {
+     if (!u)
+         return;
+ 
+-    u->card->core->mainloop->io_free(u->event);
++    if (u->event)
++        u->card->core->mainloop->io_free(u->event);
+ 
+     pa_xfree(u);
+ }
+-- 
+2.54.0 (Apple Git-157)
+

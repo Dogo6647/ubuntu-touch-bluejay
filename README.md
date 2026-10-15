@@ -9,18 +9,22 @@ An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 
 ## Progress
 
-Tested on build 2 (2026-10-15):
+Tested on build 3 (2026-10-15):
 
 | Area | State |
 |---|---|
 | Kernel and first-stage drivers (UFS, USB, display, power, modem) | Working: all 203 vendor_boot modules load |
-| Display, GPU (Mali-G78), Lomiri | Working: the welcome wizard shows |
+| Display, GPU (Mali-G78), Lomiri | Working |
 | Touch | Working |
-| Wi-Fi | Scanning works; connecting not tested |
+| Wi-Fi | Working (connects, internet) |
 | Sensors (rotation) | Working |
 | Vibration | Working |
-| adb | Not yet: the USB gadget comes up, adbd doesn't answer |
-| Bluetooth, modem, sound, camera, fingerprint | Not tested |
+| Battery and charging | Working |
+| adb over USB | Working |
+| Bluetooth | Controller up; pairing not tested |
+| Modem | Both SIM slots come up in oFono; calls and data not tested |
+| Sound | Not yet: PulseAudio's droid module rejects the float outputs and then crashes (fixes in progress) |
+| Camera, fingerprint, GPS | Not tested |
 
 ## How it works
 

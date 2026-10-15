@@ -3,11 +3,40 @@ name: build
 on:
   push:
     branches: [main]
+    paths-ignore: ['README.md']
   pull_request:
   workflow_dispatch:
 
 jobs:
+  # Ubuntu Touch packages rebuilt with fixes for this port. Native arm64, built
+  # against the UBports 24.04-2.x archive.
+  packages:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Add the UBports 24.04-2.x archive
+        run: |
+          sudo curl -fsSL -o /usr/share/keyrings/ubports.gpg https://repo.ubports.com/keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/ubports.gpg] https://repo.ubports.com/ 24.04-2.x main" |
+            sudo tee /etc/apt/sources.list.d/ubports.list
+          # Build against the UBports versions (e.g. PulseAudio 16.1 with
+          # pulseaudio-dev), as on the phone
+          printf 'Package: *\nPin: origin repo.ubports.com\nPin-Priority: 1001\n' |
+            sudo tee /etc/apt/preferences.d/ubports.pref
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends --allow-downgrades build-essential devscripts equivs fakeroot git pulseaudio
+
+      - name: Build pulseaudio-modules-droid
+        run: packages/pulseaudio-modules-droid/build.sh out/extra-debs
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extra-debs
+          path: out/extra-debs/*.deb
+
   build:
+    needs: packages
     runs-on: ubuntu-24.04
     steps:
       - name: Free disk space
@@ -24,6 +53,11 @@ jobs:
             bc bison build-essential ca-certificates cpio curl fakeroot flex git kmod \
             libbpf-dev libelf-dev libssl-dev lz4 pahole python-is-python3 python3 \
             unzip wget xz-utils
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: extra-debs
+          path: workdir/extra-debs
 
       - name: Build kernel, boot.img and device tarball
         run: ./build.sh

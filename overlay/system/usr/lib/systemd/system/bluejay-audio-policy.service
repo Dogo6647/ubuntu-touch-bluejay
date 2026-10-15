@@ -1,0 +1,10 @@
+[Unit]
+Description=16-bit audio policy for PulseAudio on the Pixel 6a
+After=mount-android-partitions.service
+Before=lxc-android-config.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/bluejay/audio-policy

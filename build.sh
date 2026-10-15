@@ -14,6 +14,8 @@
 #     its patched vndservicemanager
 #   - libhybris from the UBports 26.04-1.x archive, which can load Android 16
 #     libraries (24.04-2.x's libhybris can't yet)
+#   - Ubuntu Touch packages rebuilt with fixes (packages/*/build.sh), taken
+#     from workdir/extra-debs/ if present
 #   - this repository: deviceinfo, the kernel config fragment and the
 #     bluejay-specific overlays, applied on top of halium-gki's
 set -xe
@@ -98,6 +100,14 @@ echo "$LIBHYBRIS_DEBS" | while read -r sha pkg; do
         echo "$sha  $deb" | sha256sum -c
     fi
     dpkg-deb -x "$deb" "$RELEASE_OVERLAY"
+done
+
+# Ubuntu Touch packages rebuilt for this port by packages/*/build.sh (in CI,
+# the "packages" job puts them here)
+for deb in "$WORK"/extra-debs/*.deb; do
+    if [ -e "$deb" ]; then
+        dpkg-deb -x "$deb" "$RELEASE_OVERLAY"
+    fi
 done
 
 # Pre-clone the kernel at the pinned commit (the build tools skip their own

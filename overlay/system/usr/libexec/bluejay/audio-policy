@@ -1,0 +1,16 @@
+#!/bin/sh -e
+# PulseAudio's droid module can't use the AUDIO_FORMAT_PCM_FLOAT outputs of
+# the stock audio policy ("Couldn't find compatible configuration for mix port
+# primary output"), and then has no sink at all. The gs101 audio HAL opens the
+# same outputs in 16-bit PCM, so bind-mount a 16-bit copy of the phone's own
+# policy over the vendor file. Generated at boot, so it follows the vendor.
+src=/android/vendor/etc/audio_policy_configuration.xml
+dst=/run/bluejay/audio_policy_configuration.xml
+
+[ -e "$src" ] || exit 0
+mountpoint -q "$src" && exit 0
+
+mkdir -p /run/bluejay
+sed 's/AUDIO_FORMAT_PCM_FLOAT/AUDIO_FORMAT_PCM_16_BIT/g' "$src" > "$dst"
+chmod 0644 "$dst"
+mount --bind "$dst" "$src"
