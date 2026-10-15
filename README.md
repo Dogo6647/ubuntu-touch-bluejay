@@ -3,7 +3,7 @@
 An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 
 > **Status: early bring-up.** Ubuntu Touch runs: display, touch, Wi-Fi,
-> sound, cameras, sensors, vibration, battery and adb work. Don't install this on a
+> sound, cameras, GPS, sensors, vibration, battery and adb work. Don't install this on a
 > phone you depend on: installing it wipes the phone, and calls, camera and
 > other hardware may never work.
 
@@ -26,7 +26,7 @@ Tested on build 5 (2026-10-15):
 | Sound output (speaker), volume keys | Working: 16-bit audio policy and a rebuilt PulseAudio droid module (`packages/`) |
 | Microphone | Working (records with video) |
 | Cameras (front and back), video recording | Working |
-| GPS | Not yet: the location service and the GNSS HAL run, but no satellites are reported |
+| GPS | Working (Broadcom BCM4776 through the stock GNSS HAL; the first fix needs sky view) |
 | Fingerprint | Not supported by Ubuntu Touch 24.04 |
 
 ## How it works
