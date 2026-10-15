@@ -11,7 +11,8 @@
 set -xe
 
 HERE="$(dirname "$(realpath "$0")")"
-OUT=$(realpath "${1:?usage: $0 OUTDIR}")
+mkdir -p "${1:?usage: $0 OUTDIR}"
+OUT=$(realpath "$1")
 
 # The upstream release and the UBports packaging of the module on the phone
 # (14.2.109-0ubports2~...~4ad1b20+ubports24.04.2).
@@ -30,7 +31,6 @@ fetch() {
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-mkdir -p "$OUT"
 
 fetch "$UPSTREAM_URL" "$UPSTREAM_REV" "$WORK/pulseaudio-modules-droid"
 fetch "$PACKAGING_URL" "$PACKAGING_REV" "$WORK/packaging"
