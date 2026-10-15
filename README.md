@@ -2,22 +2,25 @@
 
 An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 
-> **Status: early bring-up.** The kernel boots, all first-stage drivers load,
-> and Ubuntu Touch starts its services, but the user interface has not come up
-> yet. Don't install this on a phone you depend on: installing it wipes the
-> phone, and calls, camera and other hardware may never work.
+> **Status: early bring-up.** Ubuntu Touch boots to its welcome wizard, and
+> touch, Wi-Fi scanning, rotation and vibration work. Don't install this on a
+> phone you depend on: installing it wipes the phone, and calls, camera and
+> other hardware may never work.
 
 ## Progress
+
+Tested on build 2 (2026-10-15):
 
 | Area | State |
 |---|---|
 | Kernel and first-stage drivers (UFS, USB, display, power, modem) | Working: all 203 vendor_boot modules load |
-| Ubuntu Touch rootfs and the Halium 16 container | Mounted and started |
-| libhybris with Android 16 libraries | Working since build 2 (libhybris from 26.04-1.x): usb-moded starts and sets up the USB gadget |
-| adb | Not yet: the gadget comes up, adbd doesn't answer |
-| Display / Lomiri | Not working yet |
-| Wi-Fi, Bluetooth | Module loading fixed (see `kernel/bluejay.config`), not tested yet |
-| Touch, sound, sensors, modem, camera | Not tested |
+| Display, GPU (Mali-G78), Lomiri | Working: the welcome wizard shows |
+| Touch | Working |
+| Wi-Fi | Scanning works; connecting not tested |
+| Sensors (rotation) | Working |
+| Vibration | Working |
+| adb | Not yet: the USB gadget comes up, adbd doesn't answer |
+| Bluetooth, modem, sound, camera, fingerprint | Not tested |
 
 ## How it works
 
