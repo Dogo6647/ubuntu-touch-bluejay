@@ -35,7 +35,17 @@ ZUMAPRO_REV=02787eaf5425c3b276effca2274a10ed83ad75b6
 # https://gitlab.com/ubports/development/core/packaging/libhybris/-/merge_requests/65
 # Drop this once 24.04-2.x ships it.
 LIBHYBRIS_VER=0.1.0+git20260624+7079712-0ubports1+0~20260918102841.32+ubports26.04.1~1.gbpf11074
-LIBHYBRIS_PKGS="libandroid-properties1 libhybris libhybris-common1 libhybris-test libhybris-utils libhardware2 libmedia1 libvulkan1-hybris"
+# sha256 and package, as in the 26.04-1.x Packages index
+LIBHYBRIS_DEBS="
+0c13e4cb49474c8c8e2dd70cdfaa6e8befeb61b2e1abb58c81e440222f131b77 libandroid-properties1
+1e8f65a372fec8e0e62be3b36487ba9bbbb1abd9ab319fc0be6afa236b9381a5 libhybris
+b19be62dd32c3f0761d9f1bc0e3427d51a0e574a8c5e8b3214edc302a0f1f8ee libhybris-common1
+6572538bbdaa742a1b7cd91439f5ab68616ebbff2bd7cc554e99de52e85b6ae0 libhybris-test
+a6b2166fb9b8b9b98c4cc8747cb1e3962612bd3ba69fc20cd26cc60b56103ba2 libhybris-utils
+382b7cb3dc3a24d0343a7d4bb0f3d3b2677c2d8f8992502dd9ce5a2d88fbace8 libhardware2
+e3df1a6ed1c69e4777c7cd725bafc5c08c5fdca73fe54fcd7ba6c0f4837c822b libmedia1
+50237b5e68d309358adba39adc79e386747ea4094a0c309d785199ae89f04348 libvulkan1-hybris
+"
 
 WORK="$HERE/workdir"
 STAGE="$WORK/stage"
@@ -79,10 +89,14 @@ fi
 source "$HERE/deviceinfo"
 RELEASE_OVERLAY="$STAGE/${deviceinfo_ubuntu_touch_release}-overlay/system"
 mkdir -p "$WORK/debs" "$RELEASE_OVERLAY"
-for pkg in $LIBHYBRIS_PKGS; do
+echo "$LIBHYBRIS_DEBS" | while read -r sha pkg; do
+    [ -n "$pkg" ] || continue
     deb="$WORK/debs/${pkg}_${LIBHYBRIS_VER}_arm64.deb"
-    [ -s "$deb" ] || curl -fsSL -o "$deb" \
-        "https://repo.ubports.com/pool/main/libh/libhybris/${pkg}_${LIBHYBRIS_VER}_arm64.deb"
+    if ! echo "$sha  $deb" | sha256sum -c --status 2>/dev/null; then
+        curl -fsSL --retry 3 -o "$deb" \
+            "https://repo.ubports.com/pool/main/libh/libhybris/${pkg}_${LIBHYBRIS_VER}_arm64.deb"
+        echo "$sha  $deb" | sha256sum -c
+    fi
     dpkg-deb -x "$deb" "$RELEASE_OVERLAY"
 done
 

@@ -13,9 +13,10 @@ An unofficial [Ubuntu Touch](https://ubports.com) port for the Google Pixel 6a.
 |---|---|
 | Kernel and first-stage drivers (UFS, USB, display, power, modem) | Working: all 203 vendor_boot modules load |
 | Ubuntu Touch rootfs and the Halium 16 container | Mounted and started |
-| libhybris with Android 16 libraries | First boot: aborted (ELF TLS). Build 2 ships the fixed libhybris, not tested yet |
+| libhybris with Android 16 libraries | Working since build 2 (libhybris from 26.04-1.x): usb-moded starts and sets up the USB gadget |
+| adb | Not yet: the gadget comes up, adbd doesn't answer |
 | Display / Lomiri | Not working yet |
-| Wi-Fi, Bluetooth | Build 2 fixes the module loading (see `kernel/bluejay.config`), not tested yet |
+| Wi-Fi, Bluetooth | Module loading fixed (see `kernel/bluejay.config`), not tested yet |
 | Touch, sound, sensors, modem, camera | Not tested |
 
 ## How it works
@@ -97,9 +98,12 @@ recent Android platform-tools, `telnet` and Python 3. It works from macOS
    ```
 
    Compare the SHA-256 it prints with `sha256sum /root/userdata/ubuntu.img` in
-   the shell. For development, also create `/root/userdata/.force-adb` (adb
-   without authorization) or `/root/userdata/.force-ssh` (USB networking and
-   SSH).
+   the shell. For development, also create `/root/userdata/.force-adb` (adb) or
+   `/root/userdata/.force-ssh` (USB networking and SSH).
+
+   To reinstall over an existing image, write to `ubuntu.img.new` and `mv` it
+   over `ubuntu.img` after checking it: the debug shell has the old image
+   mounted.
 
 4. Go back to the bootloader from the shell and flash the real boot image:
 
@@ -113,14 +117,17 @@ recent Android platform-tools, `telnet` and Python 3. It works from macOS
    fastboot reboot
    ```
 
-Install on slot a only: the initramfs always uses slot a for now.
+Install on slot a only (`fastboot getvar current-slot` should say `a`): the
+initramfs always uses slot a for now.
 
 ### Debugging
 
-- Until the UI starts, usb-moded's rescue mode offers USB networking and SSH:
-  `ssh -p 8022 phablet@10.15.19.82`.
-- With `/userdata/.force-adb`, `adb shell` works without authorization once the
-  system is up.
+- Until lightdm starts, usb-moded's rescue mode offers USB networking and SSH:
+  `ssh -p 8022 phablet@10.15.19.82`. With `/userdata/.force-ssh` that mode
+  stays on.
+- With `/userdata/.force-adb`, USB switches to adb once lightdm has started.
+  Development images don't ask to authorize the computer (`make-flashable.sh`
+  builds them with `ADBD_SECURE=0`).
 - To read the logs of a boot that didn't come up, flash the debug image from
   step 2 again. In its shell, the journal is under
   `/root/userdata/system-data/var/log/journal`:
@@ -128,6 +135,9 @@ Install on slot a only: the initramfs always uses slot a for now.
   ```sh
   chroot /root journalctl -D /userdata/system-data/var/log/journal -b -1 --no-pager
   ```
+
+  During bring-up the journal also keeps kernel messages, and with them the
+  Android container's init log (`journald.conf.d/zz-bluejay-bringup.conf`).
 
 ### Going back to Android
 
