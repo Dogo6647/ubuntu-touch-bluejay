@@ -1,0 +1,2 @@
+# Release image: the development job prepare-fake-ota.sh writes here is
+# replaced. (Nothing reads /etc/init: Ubuntu Touch uses systemd.)

@@ -1,0 +1,7 @@
+# Settings for the ADB daemon.
+#
+# Release images: adbd asks the phone's user to authorize each computer (host
+# key verification), as stock Ubuntu Touch does. This file replaces the one
+# UBports' prepare-fake-ota.sh writes into the rootfs for development images
+# (ADBD_SECURE=0, no authorization).
+ADBD_SECURE=1

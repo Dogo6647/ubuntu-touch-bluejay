@@ -88,6 +88,7 @@ fi
 
 # build-tarball-mainline.sh copies <release>-overlay/system into the rootfs
 # overlay, after overlay/.
+# shellcheck source=deviceinfo
 source "$HERE/deviceinfo"
 RELEASE_OVERLAY="$STAGE/${deviceinfo_ubuntu_touch_release}-overlay/system"
 mkdir -p "$WORK/debs" "$RELEASE_OVERLAY"
@@ -116,6 +117,17 @@ KERNEL_DIR="$WORK/build/downloads/kernel-android-common"
 mkdir -p "$WORK/build/downloads"
 fetch "$KERNEL_URL" "$KERNEL_REV" "$KERNEL_DIR"
 cp "$HERE/kernel/bluejay.config" "$KERNEL_DIR/arch/arm64/configs/bluejay.config"
+
+# The Halium initramfs for boot.img. The build tools would download whatever the
+# "dynparts" release URL holds at the time, unchecked; they skip the download
+# when the file is already there.
+RAMDISK_URL=https://github.com/halium/initramfs-tools-halium/releases/download/dynparts/initrd.img-touch-arm64
+RAMDISK_SHA256=da1073d025e3ffca88b70463841509260e364771ce0733ed76a0b6eaf7eedc8e
+ramdisk="$WORK/build/downloads/halium-boot-ramdisk.img"
+if ! echo "$RAMDISK_SHA256  $ramdisk" | sha256sum -c --status 2>/dev/null; then
+    curl -fsSL --retry 3 -o "$ramdisk" "$RAMDISK_URL"
+    echo "$RAMDISK_SHA256  $ramdisk" | sha256sum -c
+fi
 
 cd "$STAGE"
 "$WORK/build-tools/build.sh" -b "$WORK/build" -o "$OUT" "$@"
