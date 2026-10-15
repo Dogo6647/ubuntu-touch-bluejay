@@ -1,0 +1,48 @@
+deviceinfo_name="Pixel 6a"
+deviceinfo_manufacturer="Google"
+deviceinfo_codename="bluejay"
+deviceinfo_arch="aarch64"
+
+# The phone keeps its stock Android 16 firmware and vendor partitions
+# (BP4A.251205.006, the build LineageOS 23.2 and Halium 16.0 are based on).
+deviceinfo_halium_version="16"
+deviceinfo_ubuntu_touch_release="24.04-2.x"
+
+# Kernel: UBports' generic GKI android14-6.1 kernel with halium.config.
+# The stock kernel is GKI android14-6.1 too (6.1.145-android14-11), and the
+# Halium branch keeps the GKI ABI, so the stock vendor modules in vendor_boot
+# and vendor_dlkm load unchanged.
+deviceinfo_kernel_source="https://gitlab.com/ubports/porting/community-ports/android12/generic/kernel-android-common.git"
+deviceinfo_kernel_source_branch="android14-6.1-halium"
+deviceinfo_kernel_defconfig="gki_defconfig halium.config"
+deviceinfo_kernel_cmdline=""
+deviceinfo_kernel_clang_compile="true"
+deviceinfo_kernel_llvm_compile="true"
+# Same compiler as Google's android14-6.1 GKI builds
+deviceinfo_kernel_clang_branch="main-kernel-build-2023"
+deviceinfo_kernel_clang_revision="r487747c"
+deviceinfo_kernel_image_name="Image.lz4"
+
+# Boot image: header v4 and no init_boot partition (the phone launched with
+# Android 12). The Halium ramdisk goes into boot.img and is loaded on top of
+# the stock vendor_boot ramdisks, which carry the first-stage modules.
+deviceinfo_bootimg_header_version="4"
+deviceinfo_bootimg_has_init_boot_partition="false"
+deviceinfo_bootimg_partition_size="67108864"
+deviceinfo_bootimg_os_version="16"
+deviceinfo_bootimg_os_patch_level="2025-12"
+deviceinfo_bootimg_qcdt="false"
+deviceinfo_flash_pagesize="4096"
+deviceinfo_prebuilt_boot_ramdisk_source="https://github.com/halium/initramfs-tools-halium/releases/download/dynparts/initrd.img-touch-arm64"
+deviceinfo_ramdisk_compression="lz4"
+deviceinfo_skip_dtbo_partition="true"
+
+# There is no recovery partition: UBports' recovery (with fastbootd) goes into
+# boot.img and starts when the bootloader asks for recovery.
+deviceinfo_has_recovery_partition="false"
+deviceinfo_use_unified_recovery="true"
+deviceinfo_prebuilt_recovery_ramdisk_source="https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-16.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
+
+# Rootfs goes into the system_a logical partition in super
+deviceinfo_rootfs_image_sector_size="4096"
+deviceinfo_system_partition_size="5120M"
