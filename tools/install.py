@@ -80,7 +80,11 @@ INITRAMFS_MOUNT_ROOTS = ("/root", "/tmpmnt", "/halium-system", "/android-rootfs"
 # Seconds
 FIND_PHONE_WAIT = 180
 INSTALLER_WAIT = 120
+INSTALLER_HINT_AFTER = 45
 BOOTLOADER_WAIT = 60
+
+REPLUG_HINT = ("If the computer shows no new network connection for the phone, unplug the USB "
+               "cable and plug it in again: macOS sometimes doesn't set up the connection.")
 
 # busybox ash's line editor keeps at most 1024 bytes of a command line
 MAX_COMMAND_LINE = 900
@@ -925,13 +929,18 @@ class PhoneShell:
 def connect_shell(serial: str, timeout: float = INSTALLER_WAIT) -> PhoneShell:
     info(f"Waiting for the installer on the phone ({PHONE_IP}, up to {timeout:.0f} s). "
          "The phone shows the Google logo meanwhile.")
-    deadline = time.monotonic() + timeout
+    start = time.monotonic()
+    deadline = start + timeout
     last_error = None  # type: Optional[Exception]
+    hinted = False
     while time.monotonic() < deadline:
         try:
             sock = socket.create_connection((PHONE_IP, TELNET_PORT), timeout=3)
         except OSError as e:
             last_error = e
+            if not hinted and time.monotonic() - start >= INSTALLER_HINT_AFTER:
+                info(f"  No answer yet. {REPLUG_HINT} The installer keeps waiting.")
+                hinted = True
             time.sleep(1)
             continue
         shell = PhoneShell(sock)
@@ -963,7 +972,8 @@ def connect_shell(serial: str, timeout: float = INSTALLER_WAIT) -> PhoneShell:
         "gets an address in 192.168.2.20-90 from it (DHCP). Check that this network interface is "
         "up (on Linux, NetworkManager may need you to connect it), that no VPN or other "
         "192.168.2.x network takes the address, and on macOS 15 or newer that your terminal app "
-        "may use the local network (System Settings > Privacy & Security > Local Network).")
+        "may use the local network (System Settings > Privacy & Security > Local Network). "
+        f"{REPLUG_HINT}")
 
 
 # Userdata on the phone ######################################################

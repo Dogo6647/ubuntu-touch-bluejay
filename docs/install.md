@@ -461,7 +461,10 @@ an address between 192.168.2.20 and 192.168.2.90 by DHCP.
 
 Check that the computer has such an address:
 
-- **macOS**: System Settings > Network shows the new connection. If it has a
+- **macOS**: System Settings > Network shows the new connection. If there's no
+  new connection at all, unplug the USB cable and plug it in again: macOS
+  sometimes doesn't set it up. The installer prints this hint after 45 seconds
+  and keeps waiting. If the connection has a
   self-assigned 169.254.x.x address, set it to a manual address,
   192.168.2.20, subnet mask 255.255.255.0. On macOS 15 and newer, your
   terminal app may also need permission for the local network: System
@@ -545,6 +548,19 @@ doesn't answer on some Macs. If `flash-all.sh` hangs at that step, hold Power
 and Volume Down to get back to the bootloader and run `flash-all.sh` from a
 Linux computer. There's no tested way yet to restore Android from a Mac on
 which fastbootd doesn't answer.
+
+### SSH over USB doesn't answer
+
+With `--dev-access ssh`, the computer gets an address from the phone by DHCP
+(10.15.19.x) about half a minute after the phone starts. If `ping 10.15.19.82`
+doesn't answer:
+
+- **macOS**: sometimes macOS doesn't set up the phone's USB network interface
+  after the phone restarts. System Settings > Network doesn't show it, and
+  `ifconfig` has no interface with a 10.15.19.x address. Unplug the USB cable
+  and plug it in again.
+- **Linux**: see [The installer doesn't reach 192.168.2.15](#the-installer-doesnt-reach-192168215)
+  for NetworkManager and `ip`.
 
 ### The phone doesn't start Ubuntu Touch
 

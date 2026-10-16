@@ -904,6 +904,30 @@ class DevAccessTest(unittest.TestCase):
                          [saved + "rm -f /mnt/userdata/.force-adb && rm -f /mnt/userdata/.force-ssh"])
 
 
+class ConnectShellTest(unittest.TestCase):
+    def test_replug_hint_then_timeout(self):
+        clock = [0.0]
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        def create_connection(address, timeout=None):
+            clock[0] += 3
+            raise socket.timeout("timed out")
+
+        out = io.StringIO()
+        with mock.patch.object(install.time, "monotonic", lambda: clock[0]), \
+                mock.patch.object(install.time, "sleep", sleep), \
+                mock.patch.object(install.socket, "create_connection", create_connection), \
+                contextlib.redirect_stdout(out):
+            with self.assertRaises(install.InstallError) as cm:
+                install.connect_shell("SERIAL", timeout=120)
+        self.assertEqual(out.getvalue().count("plug it in again"), 1)
+        self.assertIn("keeps waiting", out.getvalue())
+        self.assertIn("didn't answer", str(cm.exception))
+        self.assertIn("plug it in again", str(cm.exception))
+
+
 class FindPhoneTest(unittest.TestCase):
     def find(self, product):
         fastboot = mock.Mock()
