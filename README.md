@@ -11,7 +11,7 @@ Halium 16 on top of the phone's stock Android 16 firmware.
 
 ## Status
 
-Tested on build 5 (2026-10-15):
+Tested on the phone with the development build of 0.1.0 (2026-10-16):
 
 | Area | State |
 |---|---|
@@ -30,7 +30,7 @@ Tested on build 5 (2026-10-15):
 | adb over USB | Working |
 | Modem | Both SIM slots come up in oFono; calls and mobile data not tested |
 | Wi-Fi hotspot | Not tested |
-| Standby (screen off, overnight) | Not tested yet |
+| Standby (screen off) | Works: about 1.3% battery per hour overnight (Wi-Fi on, no SIM). No deep sleep yet |
 | File transfer over USB (MTP) | Not supported: the kernel has no MTP function |
 | Fingerprint reader | Not supported by this port |
 

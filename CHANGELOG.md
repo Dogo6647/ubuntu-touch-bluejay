@@ -12,7 +12,7 @@ tagged version as the release notes. Before tagging v0.1.0, replace
 "unreleased" with the release date: "## [0.1.0] - 2026-10-20".
 -->
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-10-16
 
 The first release: Ubuntu Touch 24.04-2.x for the Google Pixel 6a, with
 Halium 16 on stock Android 16 build BP4A.251205.006. This is an alpha.
@@ -78,6 +78,11 @@ Compared with the development builds:
   anti-rollback version, the phone can't go back to this build and can't run
   this release. See the install guide, step 2, before you downgrade.
 - Only slot a is supported.
+- No deep sleep: the phone doesn't suspend. With the screen off, Wi-Fi on and
+  no SIM it used about 1.3% of the battery per hour overnight.
+- `install.py` was tested on the phone over an existing install. Installing
+  straight from Android uses the same steps but hasn't been run with the
+  script yet.
 - Calls and mobile data haven't been tested.
 - Bluetooth audio devices and the Wi-Fi hotspot haven't been tested.
 - File transfer over USB (MTP) doesn't work: the kernel has no MTP gadget
