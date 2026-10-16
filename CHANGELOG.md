@@ -8,9 +8,12 @@ and this project adheres to
 
 <!--
 The release workflow (.github/workflows/release.yml) uses the section of the
-tagged version as the release notes. Before tagging v0.1.0, replace
-"unreleased" with the release date: "## [0.1.0] - 2026-10-20".
+tagged version as the release notes. Before tagging a version, rename
+"## [Unreleased]" to the version and its release date, for example
+"## [0.2.0] - 2026-11-02", and add a new empty "## [Unreleased]" above it.
 -->
+
+## [Unreleased]
 
 ## [0.1.0] - 2026-10-16
 
@@ -104,4 +107,5 @@ Compared with the development builds:
   and going back to Android) needs fastbootd, which doesn't answer on some
   Macs. Use a Linux computer for that step.
 
+[Unreleased]: https://github.com/logicalangel/ubuntu-touch-bluejay/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/logicalangel/ubuntu-touch-bluejay/releases/tag/v0.1.0
