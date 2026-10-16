@@ -178,6 +178,23 @@ and in `overlay/system/etc/default/lsc-wrapper.d/60-bluejay.conf`: the
 composer and allocator, the sensors HAL, the vibrator and the Bluetooth HAL
 (`bcmbtlinux`).
 
+## No sound: AoC and Trusty
+
+Sound goes through the audio processor (AoC). Its firmware loads at boot, and
+the GSA authenticates it through Trusty. Check AoC, Trusty's own log and the
+services that use Trusty:
+
+```sh
+head -1 /sys/devices/platform/19000000.aoc/revision
+sudo timeout 3 cat /dev/trusty-log0
+getprop init.svc.vendor.keymint-trusty
+```
+
+On a good boot, AoC shows `FW Revision : 0x0` and KeyMint is `running`. If
+AoC is `Offline`, KeyMint is `restarting` and Trusty's log stops at
+`validate_descr:1158: unexpected status 1`, Trusty refused IPC for this boot.
+See [the module order](porting-notes.md#trusty-ipc-and-the-module-order).
+
 ## The installer
 
 `install.py --verbose` prints every command it runs, on the computer (`$ ...`)

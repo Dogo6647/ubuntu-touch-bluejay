@@ -111,7 +111,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            android-sdk-libsparse-utils e2fsprogs fakeroot git jq python3 wget xz-utils zstd
+            android-sdk-libsparse-utils e2fsprogs fakeroot git jq lz4 python3 wget xz-utils zstd
 
       - name: Fetch build tools and stage the port
         run: ./build.sh -s

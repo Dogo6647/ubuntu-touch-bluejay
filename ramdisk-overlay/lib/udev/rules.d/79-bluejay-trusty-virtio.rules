@@ -1,0 +1,7 @@
+# Don't let udev load trusty-virtio in the initramfs. It has to load after
+# trusty-ipc (MODULE_SOFTDEP("pre: trusty-ipc")), and udev would load it as
+# soon as trusty-core adds the device, while modprobe may still be loading
+# trusty-ipc. Trusty then refuses IPC for the whole boot. The initramfs loads
+# trusty-virtio by name from modules.load instead, after trusty-ipc. See
+# "Trusty IPC and the module order" in docs/porting-notes.md.
+ACTION=="add", SUBSYSTEM=="platform", ENV{MODALIAS}=="of:*Candroid,trusty-virtio-v1*", ENV{MODALIAS}=""

@@ -68,6 +68,12 @@ Compared with the development builds:
 - The Android container now has the Trusty device nodes
   (`/dev/trusty-ipc-dev0`, `/dev/trusty-log0`) that KeyMint, Gatekeeper and
   metricsd open.
+- Sound no longer fails on some boots, most often the first one after an
+  install. The initramfs could start Trusty's virtio device before its IPC
+  driver was ready. Trusty then refused IPC for the whole boot, so the audio
+  processor's firmware couldn't load and KeyMint restarted in a loop. udev in
+  the initramfs no longer loads `trusty-virtio`; the initramfs loads it from
+  its module list, after `trusty-ipc`.
 
 ### Known issues
 

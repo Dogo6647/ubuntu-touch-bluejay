@@ -20,7 +20,7 @@
 #             journal keeps kernel messages
 #   release   for users: adb asks to authorize each computer, no rescue mode
 #
-# Needs Linux with sudo, e2fsprogs, img2simg, python3 and git.
+# Needs Linux with sudo, e2fsprogs, img2simg, lz4, python3 and git.
 set -e
 
 usage() {
@@ -162,4 +162,41 @@ esac
 rm -f "$OUT/rootfs.img"
 
 "$HERE/tools/make-debug-boot.sh" "$OUT/boot.img" "$OUT/boot-installer.img"
+
+# Every file of ramdisk-overlay/ is in boot.img's ramdisk, unchanged. The
+# ramdisk is lz4 over concatenated cpio archives; the later archive wins.
+RD=$(mktemp -d)
+(cd "$HERE/tools/.cache/mkbootimg" &&
+    python3 unpack_bootimg.py --boot_img "$OUT/boot.img" --out "$RD" > /dev/null)
+lz4 -dc "$RD/ramdisk" > "$RD/ramdisk.cpio"
+python3 - "$RD/ramdisk.cpio" "$HERE/ramdisk-overlay" <<'EOF' || fail "boot.img's ramdisk lacks ramdisk-overlay/"
+import os
+import sys
+
+data = open(sys.argv[1], "rb").read()
+files = {}
+off = 0
+while off < len(data):
+    if data[off] == 0:
+        off += 1
+        continue
+    if data[off:off + 6] not in (b"070701", b"070702"):
+        sys.exit(f"no cpio header at {off}")
+    fields = [int(data[off + 6 + 8 * i:off + 14 + 8 * i], 16) for i in range(13)]
+    size, namesize = fields[6], fields[11]
+    name = data[off + 110:off + 109 + namesize].decode()
+    start = (off + 110 + namesize + 3) & ~3
+    files[os.path.normpath(name)] = data[start:start + size]
+    off = (start + size + 3) & ~3
+ok = True
+for root, _dirs, names in os.walk(sys.argv[2]):
+    for n in names:
+        path = os.path.join(root, n)
+        rel = os.path.relpath(path, sys.argv[2])
+        if files.get(rel) != open(path, "rb").read():
+            print(f"{rel}: missing or different in boot.img's ramdisk", file=sys.stderr)
+            ok = False
+sys.exit(0 if ok else 1)
+EOF
+rm -rf "$RD"
 ls -la "$OUT"

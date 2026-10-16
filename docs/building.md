@@ -14,6 +14,7 @@ computer, how the devel and release variants differ, and how a release is made.
 | `overlay/` | Files in every image, applied on top of halium-gki's overlay |
 | `overlay-devel/` | Extra files only in devel images |
 | `overlay-release/` | Extra files only in release images |
+| `ramdisk-overlay/` | Files added to the Halium initramfs in `boot.img`, on top of halium-gki's ramdisk overlay |
 | `packages/` | Ubuntu Touch packages rebuilt with fixes for this port |
 | `tools/install.py` | The installer |
 | `tools/make-debug-boot.sh` | Makes a copy of `boot.img` that stops in the initramfs shell |
@@ -25,7 +26,8 @@ computer, how the devel and release variants differ, and how a release is made.
 
 1. **`build.sh`** fetches UBports' build tools, halium-gki and the Pixel 9
    port at pinned commits. It stages the port: halium-gki's `overlay/` and
-   `ramdisk-overlay/`, then this repository's `overlay/` on top, plus the
+   `ramdisk-overlay/`, then this repository's `overlay/` and
+   `ramdisk-overlay/` on top, plus the
    Pixel 9 port's patched `vndservicemanager`. It extracts the pinned
    libhybris packages from the 26.04-1.x archive and any package in
    `workdir/extra-debs/` into `24.04-2.x-overlay/`, the overlay for this

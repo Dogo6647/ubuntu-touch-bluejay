@@ -62,6 +62,42 @@ vendor partitions in it are used as they are. The `dynparts` release is a
 moving URL, so `build.sh` downloads the file itself and pins it by sha256; the
 build tools would take whatever the URL holds, unchecked.
 
+### Trusty IPC and the module order
+
+`trusty-virtio.ko` hands Trusty the descriptors of its virtio devices and
+starts them. Trusty only accepts a device whose driver is ready, and
+`trusty-ipc.ko` is that driver, so trusty-virtio has to load after trusty-ipc.
+The module says so (`MODULE_SOFTDEP("pre: trusty-ipc")`, also in the stock
+`modules.softdep`), and stock Android's first-stage init follows it.
+
+The Halium initramfs starts udevd before it loads the modules in
+`modules.load`. trusty-core loads early, as a dependency of `ehld`, and adds
+the `trusty:virtio` platform device. udevd then loads trusty-virtio by its
+alias while modprobe is still loading trusty-ipc in the same dependency chain.
+libkmod counts a module that is still initializing as loaded, so the soft
+dependency doesn't always hold. On some boots trusty-virtio started the device
+before trusty-ipc had registered its driver. Trusty logged
+`validate_descr:1158: unexpected status 1` in `/dev/trusty-log0` and never
+started IPC, while Linux showed `virtio0` as bound and ready (status 7).
+Without Trusty IPC:
+
+- the GSA can't authenticate the AoC firmware, so AoC stays `Offline` and
+  there's no sound
+- KeyMint and metricsd restart in a loop
+
+In testing this happened on 3 of 5 first boots after an install, and not on
+ordinary restarts.
+
+`ramdisk-overlay/lib/udev/rules.d/79-bluejay-trusty-virtio.rules` clears the
+modalias of the `trusty:virtio` device in the initramfs, so udevd's
+`80-drivers.rules` doesn't load the module. The initramfs then loads
+trusty-virtio by name at its place in `modules.load`, about a second later.
+By then trusty-ipc has long been loaded, and modprobe follows the soft
+dependency there anyway. A blacklist (`modprobe.blacklist=trusty_virtio`)
+doesn't work for this: halium-gki's loader runs modprobe with `-b`, which
+applies the blacklist to module names too. The module then waited for the
+vendor `insmod_sh` service at about 8.7 s, after KeyMint had started.
+
 ### Slot a only
 
 The Halium initramfs reads the A/B slot suffix only from the kernel command
