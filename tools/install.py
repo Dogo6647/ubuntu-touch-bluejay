@@ -1319,12 +1319,15 @@ def confirm(plan: str, erase: bool, assume_yes: bool) -> None:
         raise Cancelled()
 
 
-def next_steps(dev_access: Optional[str]) -> str:
+def next_steps(dev_access: Optional[str], keep_data: bool) -> str:
     lines = [
         "Done. Ubuntu Touch is starting.",
         "  - The first start takes about a minute (the unlocked-bootloader warning and the Google",
-        "    logo come first). Then the welcome wizard sets up language, Wi-Fi and a passcode.",
     ]
+    if keep_data:
+        lines.append("    logo come first). Your files and settings are as they were.")
+    else:
+        lines.append("    logo come first). Then the welcome wizard sets up language, Wi-Fi and a passcode.")
     if dev_access == "adb":
         lines.append("  - adb is on once the user interface has started.")
     elif dev_access == "ssh":
@@ -1399,7 +1402,7 @@ def install(args: argparse.Namespace, state: State) -> None:
     state.stage = State.DONE
     fastboot.reboot()
     info()
-    info(next_steps(args.dev_access))
+    info(next_steps(args.dev_access, args.keep_data))
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:

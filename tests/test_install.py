@@ -1150,6 +1150,7 @@ class InstallFlowTest(unittest.TestCase):
         self.assertFalse(phone.userdata_mounted())
         self.assertIn("ERASES ALL DATA", out)
         self.assertIn("Done.", out)
+        self.assertIn("welcome wizard", out)
 
     def test_keep_data(self):
         phone = FakePhone(NORMAL_BOOT_MOUNTINFO, files=["/root/userdata/ubuntu.img",
@@ -1160,6 +1161,8 @@ class InstallFlowTest(unittest.TestCase):
         self.assertEqual(phone.files, {"/root/userdata/ubuntu.img": self.expected,
                                        "/root/userdata/.force-ssh": b"old"})
         self.assertEqual(phone.mode, "ubuntu")
+        self.assertIn("settings are as they were", out)
+        self.assertNotIn("welcome wizard", out)
 
     def test_installer_on_another_phone(self):
         phone = FakePhone(NORMAL_BOOT_MOUNTINFO, files=["/root/userdata/ubuntu.img"],
