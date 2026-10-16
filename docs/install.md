@@ -333,7 +333,9 @@ it asks you to allow each computer on the phone's screen.
 - **Developer Mode** in System Settings > About turns on adb. It needs a
   passcode.
 - **`--dev-access adb`** creates `/userdata/.force-adb`. The phone switches USB
-  to adb once the user interface has started.
+  to adb once the user interface has started. On a new install, setting the
+  passcode in the welcome wizard switches USB back to charging only, and adb
+  drops. Turn on Developer Mode afterwards to get it back.
 - **`--dev-access ssh`** creates `/userdata/.force-ssh`. The phone keeps USB
   networking and an SSH server on; the computer gets an address by DHCP. Log
   in with the passcode:
