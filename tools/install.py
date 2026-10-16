@@ -627,7 +627,11 @@ class Adb:
         return result.stdout.strip() if result.returncode == 0 else ""
 
     def reboot_bootloader(self, serial: str) -> bool:
-        return _run_tool([self.exe, "-s", serial, "reboot", "bootloader"], 30).returncode == 0
+        result = _run_tool([self.exe, "-s", serial, "reboot", "bootloader"], 30)
+        # adb exits with 0 even when the phone refuses ("Failed to write reboot
+        # parameter file", as on Ubuntu Touch without root)
+        output = (result.stdout + result.stderr).lower()
+        return result.returncode == 0 and "fail" not in output and "error" not in output
 
 
 BOOTLOADER_HELP = ("To start the bootloader: turn the phone off, then hold Power and Volume Down "

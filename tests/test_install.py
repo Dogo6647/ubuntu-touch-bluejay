@@ -916,6 +916,15 @@ class FindPhoneTest(unittest.TestCase):
                 install.find_phone(fastboot, adb, assume_yes=True, timeout=0)
         return adb
 
+    def test_refused_adb_reboot_is_a_failure(self):
+        adb = install.Adb("/usr/bin/adb")
+        refused = subprocess.CompletedProcess([], 0, "", "Failed to write reboot parameter file: Permission denied\n")
+        with mock.patch.object(install, "_run_tool", return_value=refused):
+            self.assertFalse(adb.reboot_bootloader("SERIAL1"))
+        ok = subprocess.CompletedProcess([], 0, "", "")
+        with mock.patch.object(install, "_run_tool", return_value=ok):
+            self.assertTrue(adb.reboot_bootloader("SERIAL1"))
+
     def test_restarts_only_a_pixel_6a(self):
         self.find("bluejay").reboot_bootloader.assert_called_once_with("SERIAL1")
         self.find("redfin").reboot_bootloader.assert_not_called()
